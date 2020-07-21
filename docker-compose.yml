@@ -1,0 +1,33 @@
+version: "3.2"
+services:
+  authapi:
+    build: ./Authapi
+    volumes:
+      - ./Authapi:/app/Back
+    ports:
+      - "8000:8000"
+    stdin_open: true
+    tty: true
+    command: python3 manage.py runserver 0.0.0.0:8000
+  restapi:
+    build: ./RestAPI
+    volumes:
+      - ./RestAPI:/app/Back
+    ports:
+      - "7000:7000"
+    stdin_open: true
+    tty: true
+    command: python3 manage.py runserver 0.0.0.0:7000
+  frontend:
+    build: ./Front
+    volumes:
+      - ./Front:/app/Front
+      - /app/Front/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - authapi
+      - restapi
+    command: npm start

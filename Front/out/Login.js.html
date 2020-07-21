@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Login.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Login.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import React,{Component} from 'react';
+import './css/Login.css';
+//import { browserHistory } from 'react-router-dom';
+import {Button,Form,FormGroup,Label,Input} from 'reactstrap';
+import {FacebookLoginButton} from 'react-social-login-buttons';
+import { Link } from "react-router-dom";
+import axios from 'axios';
+
+var authen=false;
+var profile="";
+var is_adm=false;
+
+/**@class composant pour gerer le login
+
+*/
+
+class Login extends Component {
+
+	constructor(props){
+		super(props);
+		this.state={admin:false,ens:false,etu:false,link:"/",email:false,mdp:false};
+		this.handleCheckClic=this.handleCheckClic.bind(this);
+		this.handlelogClick=this.handlelogClick.bind(this);
+
+
+	}
+
+	/**
+	* determine le type d'utilisateur voulant ce connecter
+	* @param {boolean} adm vrai si l'utilisateur veut ce connecter en tant qu'administrateur.
+	* @param {boolean} en vrai si l'utilisateur veut ce connecter en tant qu'enseignant.
+	* @param {boolean} et vrai si l'utilisateur veut ce connecter en tant qu'etudiant.
+	*/
+	handleCheckClic(adm,en,et){
+		this.setState({admin:adm,ens:en,etu:et});
+		if(this.state.email&amp;&amp;this.state.mdp){
+			console.log(document.getElementById("pwd").value);
+			axios.get('http://127.0.0.1:8000/login/',{
+	    username: document.getElementById("mail").value,
+	    password:document.getElementById("pwd").value
+	  }).then(res => {
+	        console.log(res);
+					if (res.data.profile!==null){
+						if (this.state.admin&amp;&amp;res.data.is_admin) {
+							this.setState({link:"/home/AjouterEtudiant"});
+							is_adm=true;
+							authen=true;
+						}
+						else if (this.state.ens){
+							this.setState({link:"/home/Form"});
+							authen=true;
+						}
+						else if(this.state.etu){
+							authen=true;
+							this.setState({link:"/home"});
+						}
+						else authen=false;
+					}
+					else authen=false;
+
+	      }).catch(err=>{console.log(err);})
+
+		}
+	}
+	/**
+	* verifie que tout les champ sont remplit et fait une requete de connexion.
+	*/
+	handlelogClick(){
+		document.getElementById("mail").value==="" ? this.setState({email:false}):this.setState({email:true});
+		document.getElementById("pwd").value===""?this.setState({mdp:false}):this.setState({mdp:true});
+		if(this.state.email&amp;&amp;this.state.mdp&amp;&amp;(this.state.admin||this.state.ens||this.state.etu)){
+			if (this.state.admin) this.setState({link:"/home/AjouterEtudiant"});
+			else if (this.state.ens) this.setState({link:"/home/Form"});
+		}
+		/*if(this.state.email&amp;&amp;this.state.mdp&amp;&amp;(this.state.admin||this.state.ens||this.state.etu)){
+			axios.post(`http://127.0.0.1:8000/login`,{
+				username: document.getElementById("mail").value,
+				password:document.getElementById("pwd").value
+				}).then(res => {
+					console.log(res);
+					if (this.state.admin) this.setState({link:"/home/AjouterEtudiant"});
+					else if (this.state.ens) this.setState({link:"/home/Form"});
+				})
+		}*/
+
+	}
+
+
+
+
+
+	render(){
+
+		return(
+			&lt;Form className="login-form">
+				&lt;h1 className="font-weight-bold text-center" id="esiH1">
+					ESI SCOLARITE
+				&lt;/h1>
+
+				&lt;h2 className="text-center" id="esiH2">Bienvenue&lt;/h2>
+				&lt;img id="cadenas"src="./cadenas.png" />
+				&lt;FormGroup>
+					&lt;Label>Email&lt;/Label>
+					&lt;Input type="email" placeholder="Email" id="mail" onChange={this.handlelogClick}/>
+				&lt;/FormGroup>
+				&lt;FormGroup>
+					&lt;Label>Password&lt;/Label>
+					&lt;Input type="Password" id="pwd" placeholder="Password" onChange={this.handlelogClick}/>
+				&lt;/FormGroup>
+				&lt;label class="container">Admin
+				  &lt;input type="radio"  name="radio" onChange={()=>this.handleCheckClic(true,false,false)}/>
+				  &lt;span class="checkmark">&lt;/span>
+				&lt;/label>
+				&lt;label class="container">Enseignant
+				  &lt;input type="radio"  name="radio" onChange={()=>this.handleCheckClic(false,true,false)}/>
+				  &lt;span class="checkmark">&lt;/span>
+				&lt;/label>
+				&lt;label class="container">etudiant
+				  &lt;input type="radio"  name="radio" onChange={()=>this.handleCheckClic(false,false,true)}/>
+				  &lt;span class="checkmark">&lt;/span>
+				&lt;/label>
+				&lt;Link to={this.state.link}>&lt;Button className="btn-lg btn-danger btn-block mt-4 btn-custum" onClick={()=>this.props.onClick(document.getElementById("mail").value,authen,profile,is_adm)}>
+					Log in &lt;/Button>&lt;/Link>
+				&lt;div className="text-center">
+					&lt;a href="#" >Sign up&lt;/a>
+					&lt;span className="p-2">|&lt;/span>
+					&lt;a href="#">Forgot Password&lt;/a>
+				&lt;/div>
+			&lt;/Form>
+		)
+	}
+}
+
+export default Login;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="App.html">App</a></li><li><a href="Etudiant.html">Etudiant</a></li><li><a href="Footer.html">Footer</a></li><li><a href="Formabs.html">Formabs</a></li><li><a href="FormAjout.html">FormAjout</a></li><li><a href="ListeEtudiant.html">ListeEtudiant</a></li><li><a href="Login.html">Login</a></li><li><a href="Navb.html">Navb</a></li><li><a href="SideBar.html">SideBar</a></li><li><a href="Square.html">Square</a></li><li><a href="User.html">User</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Fri Jan 03 2020 22:18:56 GMT+0100 (CET)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
